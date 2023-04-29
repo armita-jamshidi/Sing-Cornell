@@ -13,7 +13,7 @@ db_filename = "cms.db"
 #success and failure responses
 def success_response(data, code=200):
     """
-    Success response
+    Success response, 
     """
     return json.dumps(data), code
 
