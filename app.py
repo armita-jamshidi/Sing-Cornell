@@ -1,8 +1,8 @@
 import json
 from flask import Flask, request
-from src.db import db
-from src.db import Songs
-from src.db import User
+from db import db
+from db import Songs
+from db import User
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///audio.db'
@@ -98,4 +98,5 @@ def delete_song(song_id):
     db.session.commit()
     return success_response(song.serialize())
   
-
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000, debug=True)
