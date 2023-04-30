@@ -3,12 +3,15 @@ from flask import Flask, request
 from db import db
 from db import Songs
 from db import User
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///audio.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db_filename = "cms.db"
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_filename}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_ECHO"] = True
 
+db.init_app(app)
+with app.app_context():
+    db.create_all()
 
 #success and failure responses
 def success_response(data, code=200):
@@ -29,7 +32,7 @@ def get_all_music():
     """
     Gets all Cornell music
     """
-    songs = [songs.serialize() for song in Songs.query.all()]
+    songs = [song.serialize() for song in Songs.query.all()]
     return success_response({"songs": songs})
 
 @app.route("/create/user/", methods=["POST"])
@@ -42,7 +45,10 @@ def create_user():
     class_year = body.get("class_year")
     if name is None or class_year is None:
         return failure_response("missing a field")
-    new_user = User
+    new_user = User(name=name,class_year=class_year)
+    db.session.add(new_user)
+    db.session.commit()
+    return success_response(new_user.serialize())
 
 @app.route("/delete/user/<int:user_id>/", methods=["DELETE"])
 def delete_user(user_id):
