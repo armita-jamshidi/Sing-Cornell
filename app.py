@@ -3,12 +3,15 @@ from flask import Flask, request
 from db import db
 from db import Songs
 from db import User
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///audio.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db_filename = "cms.db"
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_filename}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_ECHO"] = True
 
+db.init_app(app)
+with app.app_context():
+    db.create_all()
 
 #success and failure responses
 def success_response(data, code=200):
@@ -42,7 +45,10 @@ def create_user():
     class_year = body.get("class_year")
     if name is None or class_year is None:
         return failure_response("missing a field")
-    new_user = User
+    new_user = User(name=name,class_year=class_year)
+    db.session.add(new_user)
+    db.session.commit()
+    return success_response(new_user.serialize(), 201)
 
 @app.route("/delete/user/<int:user_id>/", methods=["DELETE"])
 def delete_user(user_id):
@@ -65,14 +71,19 @@ def create_song(user_id):
     if user is None:
         return failure_response("user not found")
     body = json.loads(request.data)
+
+    if body.get("image_data") is None:
+        return failure_response("No base64 image to be found!")
+
     new_song = Songs(
         name = body.get("name"),
         description = body.get("description"),
-        user_id = user_id
+        user_id = user_id,
+        image_data = body.get("image_data")
     )
     db.session.add(new_song)
     db.session.commit()
-    return success_response(new_song.serialize())
+    return success_response(new_song.serialize(), 201)
     
 
 @app.route("/get/song/<int:song_id>/", methods=["GET"])
@@ -97,6 +108,14 @@ def delete_song(song_id):
     db.session.delete(song)
     db.session.commit()
     return success_response(song.serialize())
+
+# @app.route("/upload/", methods=["POST"])
+# def upload():
+#     """
+#     Endpoint for uploading an image to AWS given its base64 form,
+#     then storing/returning the URL of that image
+#     """
+#     body = json.loads(request.data)
   
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

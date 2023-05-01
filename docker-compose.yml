@@ -1,4 +1,9 @@
 version: '3'
 
 services:
+  music_app:
+    image: "aaj34/demo6"
+    env_file: .env
+    ports:
+      - "5000:5000"
   
