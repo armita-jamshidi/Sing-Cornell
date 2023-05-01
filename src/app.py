@@ -16,7 +16,7 @@ with app.app_context():
 #success and failure responses
 def success_response(data, code=200):
     """
-    Success response, 
+    Success response
     """
     return json.dumps(data), code
 
@@ -32,7 +32,7 @@ def get_all_music():
     """
     Gets all Cornell music
     """
-    songs = [song.serialize() for song in Songs.query.all()]
+    songs = [songs.serialize() for song in Songs.query.all()]
     return success_response({"songs": songs})
 
 @app.route("/create/user/", methods=["POST"])
@@ -48,7 +48,7 @@ def create_user():
     new_user = User(name=name,class_year=class_year)
     db.session.add(new_user)
     db.session.commit()
-    return success_response(new_user.serialize())
+    return success_response(new_user.serialize(), 201)
 
 @app.route("/delete/user/<int:user_id>/", methods=["DELETE"])
 def delete_user(user_id):
@@ -71,15 +71,19 @@ def create_song(user_id):
     if user is None:
         return failure_response("user not found")
     body = json.loads(request.data)
+
+    if body.get("image_data") is None:
+        return failure_response("No base64 image to be found!")
+
     new_song = Songs(
         name = body.get("name"),
         description = body.get("description"),
-        song_link = body.get("song_link"),
-        user_id = user_id
+        user_id = user_id,
+        image_data = body.get("image_data")
     )
     db.session.add(new_song)
     db.session.commit()
-    return success_response(new_song.serialize())
+    return success_response(new_song.serialize(), 201)
     
 
 @app.route("/get/song/<int:song_id>/", methods=["GET"])
@@ -104,6 +108,14 @@ def delete_song(song_id):
     db.session.delete(song)
     db.session.commit()
     return success_response(song.serialize())
+
+# @app.route("/upload/", methods=["POST"])
+# def upload():
+#     """
+#     Endpoint for uploading an image to AWS given its base64 form,
+#     then storing/returning the URL of that image
+#     """
+#     body = json.loads(request.data)
   
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
