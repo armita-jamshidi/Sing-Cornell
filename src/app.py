@@ -3,7 +3,7 @@ from flask import Flask, request
 from db import db
 from db import Songs
 from db import User
-db_filename = "todo.db"
+db_filename = "cms.db"
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_filename}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
