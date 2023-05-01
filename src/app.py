@@ -3,7 +3,7 @@ from flask import Flask, request
 from db import db
 from db import Songs
 from db import User
-db_filename = "cms.db"
+db_filename = "todo.db"
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_filename}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -16,7 +16,7 @@ with app.app_context():
 #success and failure responses
 def success_response(data, code=200):
     """
-    Success response, 
+    Success response
     """
     return json.dumps(data), code
 

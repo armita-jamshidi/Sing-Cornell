@@ -1,4 +1,3 @@
-
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import base64
@@ -30,6 +29,7 @@ class Songs(db.Model):
     name = db.Column(db.String, nullable=False)
     description = db.Column(db.String, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    song_link = db.Column(db.String, nullable = False)
 
     base_url_image = db.Column(db.String, nullable=True)
     salt = db.Column(db.String, nullable=False)
@@ -45,7 +45,8 @@ class Songs(db.Model):
         self.name = kwargs.get("name")
         self.description = kwargs.get("description")
         self.user_id = kwargs.get("user_id")
-
+        self.song_link = kwargs.get("song_link")
+        
         #extracting image data
         self.create(kwargs.get("image_data"))
         
@@ -123,7 +124,7 @@ class Songs(db.Model):
             "name": self.name, 
             "description": self.description,
             "user_id": self.user_id,
-
+            "song_link":self.song_link,
             #aws/image.png
             "url": f"{self.base_url}/{self.salt}.{self.extension}",
             "created_at": str(self.created_at_time)
@@ -163,3 +164,4 @@ class User(db.Model):
         songs = self.get_songs()
         return{"id": self.id, "name": self.name, "class_year": self.class_year, 
                "songs": [s.serialize() for s in songs]}
+
