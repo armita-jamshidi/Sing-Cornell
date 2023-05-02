@@ -70,16 +70,20 @@ def create_song(user_id):
     user = User.query.filter_by(id=user_id).first()
     if user is None:
         return failure_response("user not found")
+
     body = json.loads(request.data)
+    if body.get("image_data") is None:
+        return failure_response("No base64 image to be found")
     new_song = Songs(
         name = body.get("name"),
         description = body.get("description"),
         song_link = body.get("song_link"),
+        image_data = body.get("image_data"),
         user_id = user_id
     )
     db.session.add(new_song)
     db.session.commit()
-    return success_response(new_song.serialize())
+    return success_response(new_song.serialize(), 201)
     
 
 @app.route("/get/song/<int:song_id>/", methods=["GET"])
