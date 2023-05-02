@@ -57,6 +57,7 @@ class Songs(db.Model):
         2. Generates a random string for the image filename
         3. Decode the image and attempt to upload it to AWS
         """
+        print("hi")
         try:
             #gets extension of image - png, jpg
             ext = guess_extension(guess_type(image_data)[0][1:])
@@ -64,29 +65,29 @@ class Songs(db.Model):
             if ext not in EXTENSIONS:
                 raise Exception(("Unsupported file type: {ext}"))
 
-                #generate random string for image securely
-                salt = "".join(
-                    random.SystemRandom().choice(
-                        string.acii.uppercase + string.digits
-                    )
-                    for _ in range(16)
+            #generate random string for image securely
+            salt = "".join(
+                random.SystemRandom().choice(
+                    string.acii.uppercase + string.digits
                 )
+                for _ in range(16)
+            )
 
-                #remove header of base64 string
-                #substitute the first quote with the second quote
-                img_str = re.sub("^data:image/.+;base64,", "", image_data)
-                img_data = base64.b64decode(img_str)
-                img = Image.open(BytesIO(img_data))
+            #remove header of base64 string
+            #substitute the first quote with the second quote
+            img_str = re.sub("^data:image/.+;base64,", "", image_data)
+            img_data = base64.b64decode(img_str)
+            img = Image.open(BytesIO(img_data))
 
-                self.base_url = S3_BASE_URL
-                self.salt = salt
-                self.extension = ext
-                self.width = img.width
-                self.height = img.height
-                self.created_at_time = datetime.datetime.now()
+            self.base_url = S3_BASE_URL
+            self.salt = salt
+            self.extension = ext
+            self.width = img.width
+            self.height = img.height
+            self.created_at_time = datetime.datetime.now()
 
-                img_filename = f"{self.salt}.{self.extension}"
-                self.upload(img, img_filename)
+            img_filename = f"{self.salt}.{self.extension}"
+            self.upload(img, img_filename)
         except Exception as e:
             print(f"Error when creating the image: {e}")
             
