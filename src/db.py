@@ -12,44 +12,26 @@ import random
 import re
 import string
 
+
 db = SQLAlchemy()
 EXTENSIONS = ["png", "gif", "jpg", "jpeg"]
 BASE_DIR = os.getcwd()
 S3_BUCKET_NAME= os.environ.get("S3_BUCKET_NAME")
 S3_BASE_URL = f"https://{S3_BUCKET_NAME}.s3.us-east-1.amazonaws.com"
 
-
-class Songs(db.Model):
-    """
-    Song model
-    """
-
-    __tablename__ = "song"
+class Asset(db.Model):
+    __tablename__="assets"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String, nullable=False)
-    description = db.Column(db.String, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    song_link = db.Column(db.String, nullable = False)
-
-    base_url_image = db.Column(db.String, nullable=True)
+    base_url = db.Column(db.String, nullable=True)
     salt = db.Column(db.String, nullable=False)
     extension = db.Column(db.String, nullable=False)
     width = db.Column(db.Integer, nullable=False)
     height = db.Column(db.Integer, nullable=False)
-    created_at_time = db.Column(db.DateTime, nullable=False)
-
+    created_at = db.Column(db.DateTime, nullable=False)
+    song_id = db.Column(db.Integer, db.ForeignKey("song.id"), nullable=False)
     def __init__(self, **kwargs):
-        """
-        Initializes a Song object
-        """
-        self.name = kwargs.get("name")
-        self.description = kwargs.get("description")
-        self.user_id = kwargs.get("user_id")
-        self.song_link = kwargs.get("song_link")
-        
-        #extracting image data
+        self.song_id=kwargs.get("song_id")
         self.create(kwargs.get("image_data"))
-        
     def create(self, image_data):
         """
         Given an image in base64 form:
@@ -57,10 +39,10 @@ class Songs(db.Model):
         2. Generates a random string for the image filename
         3. Decode the image and attempt to upload it to AWS
         """
-        print("hi")
+
         try:
             #gets extension of image - png, jpg
-            ext = guess_extension(guess_type(image_data)[0][1:])
+            ext = guess_extension(guess_type(image_data)[0])[1:]
             #only accepted if supported filetype
             if ext not in EXTENSIONS:
                 raise Exception(("Unsupported file type: {ext}"))
@@ -68,7 +50,7 @@ class Songs(db.Model):
             #generate random string for image securely
             salt = "".join(
                 random.SystemRandom().choice(
-                    string.acii.uppercase + string.digits
+                    string.ascii_uppercase + string.digits
                 )
                 for _ in range(16)
             )
@@ -84,7 +66,7 @@ class Songs(db.Model):
             self.extension = ext
             self.width = img.width
             self.height = img.height
-            self.created_at_time = datetime.datetime.now()
+            self.created_at = datetime.datetime.now()
 
             img_filename = f"{self.salt}.{self.extension}"
             self.upload(img, img_filename)
@@ -111,9 +93,39 @@ class Songs(db.Model):
 
             #delete image from server
             os.remove(img_temp_loc)
-
+            
         except Exception as e:
             print(f"Error when uploading the image: {e}")
+    def serialize(self):
+        return{
+            "url": f"{self.base_url}/{self.salt}.{self.extension}",
+            "created_at": str(self.created_at)
+        }
+class Songs(db.Model):
+    """
+    Song model
+    """
+
+    __tablename__ = "song"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String, nullable=False)
+    description = db.Column(db.String, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    song_link = db.Column(db.String, nullable = False)
+    image = db.relationship("Asset", cascade ="delete")
+
+
+    def __init__(self, **kwargs):
+        """
+        Initializes a Song object
+        """
+        self.name = kwargs.get("name")
+        self.description = kwargs.get("description")
+        self.user_id = kwargs.get("user_id")
+        self.song_link = kwargs.get("song_link")
+        
+        #extracting image data
+        
 
     def serialize(self):
         """
@@ -126,9 +138,9 @@ class Songs(db.Model):
             "description": self.description,
             "user_id": self.user_id,
             "song_link":self.song_link,
+            #"image": [s.serialize() for s in self.image]
             #aws/image.png
-            "url": f"{self.base_url}/{self.salt}.{self.extension}",
-            "created_at": str(self.created_at_time)
+            
         }
     
 class User(db.Model):

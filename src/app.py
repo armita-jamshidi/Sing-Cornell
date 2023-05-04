@@ -3,10 +3,15 @@ from flask import Flask, request
 from db import db
 from db import Songs
 from db import User
-db_filename = "cms.db"
+from db import Asset
+from db import db
+import os
+
+db_filename = "song.db"
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_filename}"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///%s" % db_filename
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ECHO"] = True
 
 db.init_app(app)
@@ -72,20 +77,38 @@ def create_song(user_id):
         return failure_response("user not found")
 
     body = json.loads(request.data)
-    if body.get("image_data") is None:
-        return failure_response("No base64 image to be found")
+    if body.get("name") is None:
+        return failure_response("name not included")
+
+    
     new_song = Songs(
         name = body.get("name"),
         description = body.get("description"),
-        song_link = body.get("song_link"),
-        image_data = body.get("image_data"),
-        user_id = user_id
+        user_id = user_id,
+        song_link = body.get("song_link")
+        
     )
     db.session.add(new_song)
     db.session.commit()
     return success_response(new_song.serialize(), 201)
-    
 
+@app.route("/image/<int:song_id>/song/", methods = ["POST"])
+def upload(song_id):
+    song = Songs.query.filter_by(id=song_id).first()
+    if song is None:
+        return failure_response("Song not found!")
+    body = json.loads(request.data)
+    if body.get("image_data") is None:
+        return failure_response("No base64 image to be found")
+    image_data = body.get("image_data")
+    asset = Asset(
+        image_data=image_data,
+        song_id=song_id
+        )
+    db.session.add(asset)
+    db.session.commit()
+    return success_response(asset.serialize(),201)
+    
 @app.route("/get/song/<int:song_id>/", methods=["GET"])
 def get_song(song_id):
     """
@@ -111,3 +134,4 @@ def delete_song(song_id):
   
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
+
