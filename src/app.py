@@ -2,7 +2,6 @@ import json
 from flask import Flask, request
 from db import db
 from db import Songs
-from db import User
 from db import Asset
 from db import db
 import os
@@ -39,43 +38,12 @@ def get_all_music():
     """
     songs = [song.serialize() for song in Songs.query.all()]
     return success_response({"songs": songs})
-
-@app.route("/create/user/", methods=["POST"])
-def create_user():
-    """
-    Creates a user
-    """
-    body = json.loads(request.data)
-    name = body.get("name")
-    class_year = body.get("class_year")
-    if name is None or class_year is None:
-        return failure_response("missing a field")
-    new_user = User(name=name,class_year=class_year)
-    db.session.add(new_user)
-    db.session.commit()
-    return success_response(new_user.serialize())
-
-@app.route("/delete/user/<int:user_id>/", methods=["DELETE"])
-def delete_user(user_id):
-    """
-    Deletes a user
-    """
-    user = User.query.filter_by(id = user_id).first()
-    if user is None:
-        return failure_response("user not found")
-    db.session.delete(user)
-    db.session.commit()
-    return success_response(user.serialize())
   
-@app.route("/create/song/<int:user_id>/", methods = ["POST"])
-def create_song(user_id):
+@app.route("/create/song/", methods = ["POST"])
+def create_song():
     """
     Creates a song
     """
-    user = User.query.filter_by(id=user_id).first()
-    if user is None:
-        return failure_response("user not found")
-
     body = json.loads(request.data)
     if body.get("name") is None:
         return failure_response("name not included")
@@ -84,7 +52,7 @@ def create_song(user_id):
     new_song = Songs(
         name = body.get("name"),
         description = body.get("description"),
-        user_id = user_id,
+        artistname = body.get("artistname"),
         song_link = body.get("song_link")
         
     )
@@ -94,6 +62,9 @@ def create_song(user_id):
 
 @app.route("/image/<int:song_id>/song/", methods = ["POST"])
 def upload(song_id):
+    """
+    Creates an image that is connected to the song id and returns the image url
+    """
     song = Songs.query.filter_by(id=song_id).first()
     if song is None:
         return failure_response("Song not found!")
@@ -134,4 +105,3 @@ def delete_song(song_id):
   
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
-
