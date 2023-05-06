@@ -1,5 +1,8 @@
 # music_app
 Connecting Cornell students who make music with other Cornell students
-
+IOS: https://github.com/vivianzhou1288/Music-App
 Description:
 On our main screen, we have a table view that displays all the images, song name, and artist name. For each song, there is a new screen that displays the specific image for the song, song name, song artist, song description, and a play button that plays the mp3 url of the song. We also implemented an add song button that allows users to add songs, which sends networking requests and connects to the backend. Then, the new song is added into the tableview on the main screen. We also allow the user to select an image from their photos album, and our code decodes it to send to networking, and uploads to the main screen. For our app, users can choose to upload a song using the /create/song/ POST method. After the song has been created users can choose to upload image covers to the song with the /image/{song_id}/song/ POST method. Our app has a one to many relationship between song and images. Other useful features include /delete/song/{song_id}/ to delete a specific song, /get/song/{song_id}/ to get a song, and /music/ to get all songs.
+<img width="357" alt="image (1)" src="https://user-images.githubusercontent.com/76505335/236599649-a3da68b6-ca71-4cd0-8c34-65fd7cdea6de.png">
+<img width="361" alt="image (2)" src="https://user-images.githubusercontent.com/76505335/236599657-fc43f326-b5af-4bcd-a38d-c4d73bab2c89.png">
+<img width="353" alt="image" src="https://user-images.githubusercontent.com/76505335/236599660-73b42aec-1b57-43db-a2a3-02c61471c406.png">
